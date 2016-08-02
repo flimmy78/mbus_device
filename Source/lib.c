@@ -248,12 +248,26 @@ U8 binAddrToStr(U8* binAddr, U8* strAddr)
 	return NO_ERR;
 }
 
+float getErrByCoe(U16 coe)
+{
+	return (4096 / coe - 1)*100;
+}
+
+U8 coeToErr(flow_coe_ptr pCoe, flow_error_ptr pFloatErr)
+{
+	pFloatErr->bigErr = getErrByCoe(pCoe->bigErr);
+	pFloatErr->mid2Err = getErrByCoe(pCoe->mid2Err);
+	pFloatErr->mid1Err = getErrByCoe(pCoe->mid1Err);
+	pFloatErr->smallErr = getErrByCoe(pCoe->smallErr);
+	return NO_ERR;
+}
+
 U8 binErrToStr(flow_error_ptr pBinErr, flow_err_string_ptr pStrErr)
 {
-	Lib_sprintf((S8*)pStrErr->bigErr, "%d", pBinErr->bigErr);
-	Lib_sprintf((S8*)pStrErr->mid2Err, "%d", pBinErr->mid2Err);
-	Lib_sprintf((S8*)pStrErr->mid1Err, "%d", pBinErr->mid1Err);
-	Lib_sprintf((S8*)pStrErr->smallErr, "%d", pBinErr->smallErr);
+	Lib_sprintf((S8*)pStrErr->bigErr, "%1.3f", pBinErr->bigErr);
+	Lib_sprintf((S8*)pStrErr->mid2Err, "%1.3f", pBinErr->mid2Err);
+	Lib_sprintf((S8*)pStrErr->mid1Err, "%1.3f", pBinErr->mid1Err);
+	Lib_sprintf((S8*)pStrErr->smallErr, "%1.3f", pBinErr->smallErr);
 	return NO_ERR;
 }
 
@@ -292,6 +306,9 @@ U8 writeByteToFile(U8* buf, U16 bufSize, S8* fileName)
 	FileClose(fp);
 	return NO_ERR;
 }
+
+
+
 
 
 

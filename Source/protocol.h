@@ -19,6 +19,14 @@ typedef struct {
 	U16 mid2Err;//中二流量误差
 	U16 mid1Err;//中一流量误差
 	U16 smallErr;//小流量误差
+} flow_coe_str;
+typedef flow_coe_str* flow_coe_ptr;
+
+typedef struct {
+	float bigErr;//大流量误差float
+	float mid2Err;//中二流量误差float
+	float mid1Err;//中一流量误差float
+	float smallErr;//小流量误差float
 } flow_error_str;
 typedef flow_error_str* flow_error_ptr;
 
@@ -34,7 +42,7 @@ typedef struct {
 	U8 diffAt0[4];//零点差值
 	U8 pulseWidth[3];//脉冲宽度
 	U8 meterAddr[4];//表号
-	flow_error_str flowErr;//流量误差
+	flow_coe_str flowErr;//流量误差
 	U8 tempParam1[2]; //温度参数1
 	U8 tempParam2[2];//温度参数2
 	U8 meterParam[2];//仪表参数
@@ -94,6 +102,6 @@ typedef enum
 
 
 extern U8 protoR_radioMAddr(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame);
-extern U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_error_ptr pFlowErr);
+extern U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_coe_ptr pFlowErr);
 
 #endif

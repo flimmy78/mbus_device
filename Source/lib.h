@@ -27,6 +27,7 @@ extern U8 countCheck(U8 *data, U16 len);
 extern void inverseArray(U8* buf, U16 bufSize);
 extern U8 dbFrameToProto(db_mFrame_ptr pDbFrame, meter_frame_info_ptr pProtoFrame);
 extern U8 binAddrToStr(U8* binAddr, U8* strAddr);
+extern U8 coeToErr(flow_coe_ptr pCoe, flow_error_ptr pFloatErr);
 extern U8 binErrToStr(flow_error_ptr pBinErr, flow_err_string_ptr pStrErr);
 extern U8 bytesToStr(U8* buf, U16 bufSize, U8* strBuf, const char* file, const char* func, U32 line);
 extern U8 writeByteToFile(U8* buf, U16 bufSize, S8* fileName);
