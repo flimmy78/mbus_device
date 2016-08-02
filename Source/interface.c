@@ -30,7 +30,7 @@ static const GUI_WIDGET_CREATE_INFO widgetMeterRelate[] = {
 static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
 	{ FRAMEWIN_CreateIndirect, "设置误差", ID_FRAMEWIN_0, 0, 0, 240, 320, 0, 0 },
 	{ BUTTON_CreateIndirect, "表号", ID_BUTTON_0, 10, 10, 80, 20, 0, 0 },
-	{ EDIT_CreateIndirect, "", ID_EDIT_0, 110, 10, 100, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_0, 100, 10, 120, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "大", ID_TEXT_0, 10, 50, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "中二", ID_TEXT_1, 10, 90, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "中一", ID_TEXT_2, 10, 130, 80, 20, 0, 0 },
@@ -39,7 +39,7 @@ static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
 	{ EDIT_CreateIndirect, "", ID_EDIT_2, 110, 90, 100, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", ID_EDIT_3, 110, 130, 100, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", ID_EDIT_4, 110, 170, 100, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "读取", ID_BUTTON_1, 10, 255, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", ID_BUTTON_1, 10, 255, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "修改", ID_BUTTON_2, 130, 255, 80, 20, 0, 0 }
 };
 
@@ -119,6 +119,9 @@ static void setMeterErrInit(WM_HWIN hDlg)
 
 	hItem = WM_GetDialogItem(hDlg, ID_TEXT_3);
 	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_SetMaxLen(hItem, EDIT_MAX_LEN);
 }
 
 static void deviceConfigInit(WM_HWIN hDlg)
@@ -293,12 +296,22 @@ void userRadioMeterId(WM_HWIN hDlg)
 {
 	WM_HWIN hItem;
 	U8 meterAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	flow_err_string_str flowErrStr;
 
-	if (logic_radioMeterAddr(meterAddr)==ERROR) {
-		//GUI_MessageBox("\n广播读取表号失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	if (logic_radioMeterAddr(meterAddr, &flowErrStr)==ERROR) {
+		GUI_MessageBox("\n广播读取表号失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
 		hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
 		EDIT_SetText(hItem, (const char*)meterAddr);
+
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_1);
+		EDIT_SetText(hItem, (const char*)flowErrStr.bigErr);
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_2);
+		EDIT_SetText(hItem, (const char*)flowErrStr.mid2Err);
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_3);
+		EDIT_SetText(hItem, (const char*)flowErrStr.mid1Err);
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_4);
+		EDIT_SetText(hItem, (const char*)flowErrStr.smallErr);
 	}
 	WM_SetFocus(hDlg);
 }
@@ -324,7 +337,8 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 			case ID_BUTTON_0://广播读取表号
 				userRadioMeterId(hDlg);
 				break;
-			case ID_BUTTON_1://读取误差
+			case ID_BUTTON_1://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
 				break;
 			case ID_BUTTON_2://修改误差
 				break;
@@ -344,7 +358,8 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 		case GUI_KEY_NUM1://广播读取表号
 			userRadioMeterId(hDlg);
 			break;
-		case GUI_KEY_NUM2://读取误差
+		case GUI_KEY_NUM2://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
 		case GUI_KEY_NUM3://修改误差
 			break;
@@ -364,7 +379,6 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 		WM_DefaultProc(pMsg);
 	}
 }
-
 
 U8 getUartMode(em_databit_idx data, em_parity_idx parity, em_stop_idx stop)
 {

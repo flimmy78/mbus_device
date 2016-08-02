@@ -9,6 +9,8 @@
 #include "lib.h"
 #include "protocol.h"
 
+U8	gu8Seq = 0;
+
 void createFrameCJ188(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame)
 {
 	U8*	pBuf = buf;
@@ -58,7 +60,7 @@ U8 protoR_radioMAddr(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame)
 {
 	U8 data[FRAME_MAX_LEN] = { 0 };
 	memset(pSendFrame->meterAddr, pSendFrame->radioAddr, pSendFrame->addrLen);
-	pSendFrame->seq = 0;
+	pSendFrame->seq = gu8Seq++;
 
 	memcpy(data, (U8*)&(pSendFrame->dataIdentify), sizeof(U16));
 	memcpy(data + sizeof(U16), &pSendFrame->seq, sizeof(U8));
@@ -70,9 +72,19 @@ U8 protoR_radioMAddr(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame)
 	return NO_ERR;
 }
 
-U8 protoA_meterAddr(U8* buf, U16 bufSize, U8* meterAddr)
+U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_error_ptr pFlowErr)
 {
-
+	U8* p = buf;
+	meter_ret_data_str retStr;
+	U16	tmpLength = 0;
+	while (*p == pFrameInfo->prefix) {
+		p++;
+	}
+	tmpLength = ((U8*)&pFrameInfo->seq - (U8*)&pFrameInfo->startChar + 1);
+	memcpy(&pFrameInfo->startChar, p, tmpLength);
+	p += tmpLength;
+	memcpy((U8*)&retStr, p, sizeof(meter_ret_data_str));
+	memcpy((U8*)pFlowErr, (U8*)&retStr.flowErr, sizeof(flow_error_str));
 	return NO_ERR;
 }
 

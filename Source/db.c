@@ -229,15 +229,20 @@ U8 db_getFrameInfo(U32 infoIdx, db_mFrame_ptr pDbFrame)
 		DbfFieldGet(em_db_frame_id, (S8*)tmpStr, pDbf);
 		if (Lib_atoi((const char*)tmpStr) == infoIdx) {
 			if (db_readOneFrameInfo(infoIdx, pDbFrame) == ERROR) {
-				return ERROR;
+				goto retErr;
 			}
 			break;
 		}
 	}
-
+	if (i == totalRow) {//如果i的值为totalRow, 则说明数据库中未找到信息
+		goto retErr;
+	}
 	if (closeDBF() == ERROR) {
 		return ERROR;
 	}
 	return NO_ERR;
+retErr:
+	closeDBF();
+	return ERROR;
 }
 
