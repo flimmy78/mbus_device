@@ -358,11 +358,12 @@ void userModifyCoe(WM_HWIN hDlg)
 		WM_SetFocus(hItem);
 		return;
 	}
-
+	GUI_MessageBox("\n请将热表调整到温差状态\n", "温差", GUI_MESSAGEBOX_CF_MODAL);
+	WM_SetFocus(hDlg);
 	if (logic_modifyCoe(meterAddr, &flowErrStr) == ERROR) {
 		GUI_MessageBox("\n修改误差失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
 	} else {
-		GUI_MessageBox("\n修改误差成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+		GUI_MessageBox("\n发送修改命令成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
 	}
 	WM_SetFocus(hDlg);
 }
@@ -576,15 +577,13 @@ void setMeterErr()
 
 void setMeterValue()
 {
-	//int iRet;
-	//while (1) {
-	//	iRet = GUI_ExecDialogBox(widgetSetMeterValue, GUI_COUNTOF(widgetSetMeterValue), &setMeterValueCb, WM_HBKWIN, 0, 0);
-	//	if (iRet == WM_USER_EXIT)
-	//		return;
-	//}
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetSetMeterValue, GUI_COUNTOF(widgetSetMeterValue), &setMeterValueCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
 }
-
-
 
 void setMeter()
 {
