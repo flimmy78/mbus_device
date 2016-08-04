@@ -28,10 +28,10 @@ typedef sys_time_str* sys_time_ptr;
 
 
 typedef struct {
-	U8	bigErr[7];
-	U8	mid2Err[7];
-	U8	mid1Err[7];
-	U8	smallErr[7];
+	U8	bigErr[20];
+	U8	mid2Err[20];
+	U8	mid1Err[20];
+	U8	smallErr[20];
 } flow_err_string_str;
 typedef flow_err_string_str* flow_err_string_ptr;
 

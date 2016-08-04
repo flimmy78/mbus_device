@@ -89,13 +89,13 @@ U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_
 	return NO_ERR;
 }
 
-U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr pSendFrame, flow_err_string_ptr pFlowErr)
+U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr pSendFrame, flow_coe_ptr pFlowCoe)
 {
 	U8 data[FRAME_MAX_LEN] = { 0 };
 	memcpy(pSendFrame->meterAddr, meterAddr, pSendFrame->addrLen);
 	memcpy(&pSendFrame->ctlCode, modifyErrCmdSeq, 2);//0x36, 0x0C
 	memcpy(data, modifyErrCmdSeq + 2, sizeof(modifyErrCmdSeq) - 2);//0xA0, 0x19, 0x06, 0x00
-	memcpy(data, (U8*)pFlowErr, sizeof(flow_err_string_str));
+	memcpy(data + sizeof(modifyErrCmdSeq) - 2, (U8*)pFlowCoe, sizeof(flow_coe_str));
 	pSendFrame->pMsg = data;
 	if (pSendFrame->protoType == PROTOCOL_STANDARD_CJ188) {
 		createFrameCJ188(buf, bufSize, pSendFrame);

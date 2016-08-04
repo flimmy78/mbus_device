@@ -248,9 +248,76 @@ U8 binAddrToStr(U8* binAddr, U8* strAddr)
 	return NO_ERR;
 }
 
+/*
+**	将两字节4位整数, 12位小数
+**	的定点数, 转化为浮点数表示
+**	的百分比误差
+*/
 float getErrByCoe(U16 coe)
 {
-	return (4096 / coe - 1)*100;
+	/*
+	 *	老表程序使用2字节表示误差,
+	 *	高字节的高四位表示整数,
+	 *	高字节的低四位和低字节的8位
+	 *	共12位表示小数,
+	 *	所以得到的2字节无符号整数要将小数点
+	 *	向左移动12位, 即除以2^12 = 4096
+	 *	才可以得到原数
+	 *	系数与误差之间的关系:
+	 *	假设Vc为仪表计算得到的值, Vd为仪表示值
+	 *	Vs为实际值, Coe为流量系数
+	 *	此时认为Vc*Coe=Vs=Vd
+	 *	则 Err = (V1-V0)/V0
+	 *	而理论上, V1*Coe = V0
+	 *	通过上式消去V1, V0
+	 *	得:
+	 *	Coe = 1/(1+Err)
+	 *	也即:
+	 *	Err = ((1/Coe) -1)
+	 *	乘以100, 得到百分比
+	 *	注意: 测试得到的误差, 即认为此时的热表示值
+	 *	与标准值相等(因为当前认为经误差修正过的
+	 *	热表, 得到的示值就是标准值)
+	 */
+	if (coe>0) {
+		return (4096.0 / coe - 1.0)*100.0;
+	} else {//如果原系数是0, 则误差为无穷大, 为显示给用户和计算方便, 取100%
+		return 100.0;
+	}
+}
+
+/*
+**	将浮点数表示的百分比误差
+**	转化为两字节4位整数, 12位小数
+**	的定点数
+*/
+U16 getCoeByPercentErr(float percentErr, U16 oldCoe)
+{
+	/*
+	 *	假设Vc为仪表计算得到的值,
+	 *	CoeO为老的系数, ErrN为新误差
+	 *	CoeN为新的系数,
+	 *	Vd为仪表示值, 
+	 *	V0为实际值, 
+	 *	有Vd = Vc*CoeO, 1
+	 *	有V0 = Vc*CoeN, 2
+	 *	而ErrN = (Vd-V0)/V0, 3, 可得 Vd/V0 = (1+ErrN), 4
+	 *	式2 除以 式1 得, CoeN/CoeO = V0/Vd, 5
+	 *	故而 CoeN = CoeO*(V0/Vd) = CoeO/(1+ErrN)
+	 */
+	S16 i = 0;
+	U16 newCoeFix = 0;
+	float newCoeFoat = 0.0;
+	float oldCoeFloat = (oldCoe == 0 ? 1 : oldCoe) / 4096.0;
+
+	newCoeFoat = (oldCoeFloat / (1.0 + percentErr / 100.0));
+	newCoeFix |= (((int)newCoeFoat) << 12);
+	for (i = 2; i >= 0;i--) {
+		newCoeFoat -= (int)newCoeFoat;
+		newCoeFoat *= 16;
+		newCoeFix |= (((int)newCoeFoat) << (4 * i));
+	}
+	return newCoeFix;
 }
 
 U8 coeToErr(flow_coe_ptr pCoe, flow_error_ptr pFloatErr)
@@ -262,12 +329,30 @@ U8 coeToErr(flow_coe_ptr pCoe, flow_error_ptr pFloatErr)
 	return NO_ERR;
 }
 
+U8 ErrTocoe(flow_coe_ptr pOldCoe, flow_error_ptr pFloatErr, flow_coe_ptr pNewCoe)
+{
+	pNewCoe->bigErr = getCoeByPercentErr(pFloatErr->bigErr, pOldCoe->bigErr);
+	pNewCoe->mid2Err = getCoeByPercentErr(pFloatErr->mid2Err, pOldCoe->mid2Err);
+	pNewCoe->mid1Err = getCoeByPercentErr(pFloatErr->mid1Err, pOldCoe->mid1Err);
+	pNewCoe->smallErr = getCoeByPercentErr(pFloatErr->smallErr, pOldCoe->smallErr);
+	return NO_ERR;
+}
+
 U8 binErrToStr(flow_error_ptr pBinErr, flow_err_string_ptr pStrErr)
 {
 	Lib_sprintf((S8*)pStrErr->bigErr, "%1.3f", pBinErr->bigErr);
 	Lib_sprintf((S8*)pStrErr->mid2Err, "%1.3f", pBinErr->mid2Err);
 	Lib_sprintf((S8*)pStrErr->mid1Err, "%1.3f", pBinErr->mid1Err);
 	Lib_sprintf((S8*)pStrErr->smallErr, "%1.3f", pBinErr->smallErr);
+	return NO_ERR;
+}
+
+U8 stringErrToBin(flow_err_string_ptr pStrErr, flow_error_ptr pBinErr)
+{
+	pBinErr->bigErr = Lib_atof((const char*)pStrErr->bigErr);
+	pBinErr->mid2Err = Lib_atof((const char*)pStrErr->mid2Err);
+	pBinErr->mid1Err = Lib_atof((const char*)pStrErr->mid1Err);
+	pBinErr->smallErr = Lib_atof((const char*)pStrErr->smallErr);
 	return NO_ERR;
 }
 
@@ -307,7 +392,65 @@ U8 writeByteToFile(U8* buf, U16 bufSize, S8* fileName)
 	return NO_ERR;
 }
 
+U8 isFloat(U8* buf, U16 bufSize)
+{
+	em_float_state state = float_state_init;
+	S8 c;
+	S8 flag = 0;
+	U16 i = 0;
 
+	for (i = 0; i < bufSize; i++) {
+		c = buf[i];
+		switch (state) {
+		case float_state_init://初始状态只接受符号或数字
+			if (c == '+' || c == '-') {
+				state = float_state_sign;
+			}
+			else if (isdigit(c)) {
+				state = float_state_digit;
+			} else {
+				state = float_state_err;
+				goto result;
+			}
+			break;
+		case float_state_sign://符号状态只接受数字
+			if (isdigit(c)) {
+				state = float_state_digit;
+			} else {
+				state = float_state_err;
+				goto result;
+			}
+			break;
+		case float_state_digit://数字状态只接受数字和小数点
+			if (c == '.') {
+				if (flag == 0) {//如果没有接收过小数点, 则跳转到小数点状态;
+					flag = 1;
+					state = float_state_dec_point;
+				} else {//如果接受过小数点, 则直接跳转到错误状态
+					state = float_state_err;
+					goto result;
+				}
+			} else if ((c != '.') && !isdigit(c)) {
+				state = float_state_err;
+			}
+			break;
+		case float_state_dec_point://小数点状态只接受数字
+			if (isdigit(c)) {
+				state = float_state_digit;
+			} else {
+				state = float_state_err;
+				goto result;
+			}
+			break;
+		default:
+			state = float_state_err;
+			goto result;
+		}
+	}
+result:
+	//float_state_digit 是唯一的接受状态
+	return ((state == float_state_digit) ? NO_ERR : ERROR);
+}
 
 
 

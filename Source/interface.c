@@ -8,6 +8,7 @@
 #include "db.h"
 #include "protocol.h"
 #include "logic.h"
+#include "lib.h"
 #include "interface.h"
 
 
@@ -316,6 +317,56 @@ void userRadioMeterId(WM_HWIN hDlg)
 	WM_SetFocus(hDlg);
 }
 
+void userModifyCoe(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 meterAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	flow_err_string_str flowErrStr = { 0 };
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_GetText(hItem, (S8*)meterAddr, 20);
+	if (isNumber(meterAddr , STRLEN(meterAddr)) == ERROR) {
+		GUI_MessageBox("\n请在表地址输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_1);
+	EDIT_GetText(hItem, (S8*)flowErrStr.bigErr, 20);
+	if (isFloat(flowErrStr.bigErr, STRLEN(flowErrStr.bigErr)) == ERROR) {
+		GUI_MessageBox("\n请在大流量点输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_2);
+	EDIT_GetText(hItem, (S8*)flowErrStr.mid2Err, 20);
+	if (isFloat(flowErrStr.mid2Err, STRLEN(flowErrStr.mid2Err)) == ERROR) {
+		GUI_MessageBox("\n请在中二流量点输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_3);
+	EDIT_GetText(hItem, (S8*)flowErrStr.mid1Err, 20);
+	if (isFloat(flowErrStr.mid1Err, STRLEN(flowErrStr.mid1Err)) == ERROR) {
+		GUI_MessageBox("\n请在中一流量点输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_4);
+	EDIT_GetText(hItem, (S8*)flowErrStr.smallErr, 20);
+	if (isFloat(flowErrStr.smallErr, STRLEN(flowErrStr.smallErr)) == ERROR) {
+		GUI_MessageBox("\n请在小流量点输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		WM_SetFocus(hItem);
+		return;
+	}
+
+	if (logic_modifyCoe(meterAddr, &flowErrStr) == ERROR) {
+		GUI_MessageBox("\n修改误差失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		GUI_MessageBox("\n修改误差成功\n", "成功", GUI_MESSAGEBOX_CF_MODAL);
+	}
+	WM_SetFocus(hDlg);
+}
+
 void setMeterErrCb(WM_MESSAGE* pMsg)
 {
 	int NCode, Id;
@@ -341,6 +392,7 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 				GUI_EndDialog(hDlg, WM_USER_EXIT);
 				break;
 			case ID_BUTTON_2://修改误差
+				userModifyCoe(hDlg);
 				break;
 			default:
 				break;
@@ -362,6 +414,7 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
 		case GUI_KEY_NUM3://修改误差
+			userModifyCoe(hDlg);
 			break;
 		case GUI_KEY_ENTER:
 			break;
