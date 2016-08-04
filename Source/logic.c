@@ -89,10 +89,7 @@ U8 logic_modifyCoe(U8* meterAddr, flow_err_string_ptr pError)
 	ErrTocoe(&gOldCoe, &flowErrFloatStr, &flowCoeStr);
 	protoW_ModifyCoe(buf, &bufSize, lu8meterAddr, &protoStr, &flowCoeStr);
 	printBuf(buf, bufSize, FILE_LINE);
-	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
-		Lib_printf("no response from device\n");
-		return ERROR;
-	}
+	logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT);
 
 	return NO_ERR;
 }

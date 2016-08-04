@@ -10,7 +10,11 @@
 #include "protocol.h"
 
 U8	gu8Seq = 0;
-static const U8 modifyErrCmdSeq[] = { 0x36, 0x0C, 0xA0, 0x19, 0x06, 0x00 };
+static const U8 gu8modifyErrFrame[] = { 0x36, 0x0C, 0xA0, 0x19, 0x06, 0x00 };
+static const U8 gu8chkStateFrame[] = { 0xFE, 0xFE, 0xFE, 0xFE, 0x68, 0x20, \
+0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x33, 0x00, 0x61, 0x16 };
+static const U8 gu8clearValueFrame[] = { 0xFE, 0xFE, 0xFE, 0xFE, 0x68, 0x20, \
+0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x24, 0x03, 0xA0, 0x0E, 0x01, 0x04, 0x16 };
 
 void createFrameCJ188(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame)
 {
@@ -93,9 +97,9 @@ U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr p
 {
 	U8 data[FRAME_MAX_LEN] = { 0 };
 	memcpy(pSendFrame->meterAddr, meterAddr, pSendFrame->addrLen);
-	memcpy(&pSendFrame->ctlCode, modifyErrCmdSeq, 2);//0x36, 0x0C
-	memcpy(data, modifyErrCmdSeq + 2, sizeof(modifyErrCmdSeq) - 2);//0xA0, 0x19, 0x06, 0x00
-	memcpy(data + sizeof(modifyErrCmdSeq) - 2, (U8*)pFlowCoe, sizeof(flow_coe_str));
+	memcpy(&pSendFrame->ctlCode, gu8modifyErrFrame, 2);//0x36, 0x0C
+	memcpy(data, gu8modifyErrFrame + 2, sizeof(gu8modifyErrFrame) - 2);//0xA0, 0x19, 0x06, 0x00
+	memcpy(data + sizeof(gu8modifyErrFrame) - 2, (U8*)pFlowCoe, sizeof(flow_coe_str));
 	pSendFrame->pMsg = data;
 	if (pSendFrame->protoType == PROTOCOL_STANDARD_CJ188) {
 		createFrameCJ188(buf, bufSize, pSendFrame);
@@ -104,6 +108,19 @@ U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr p
 	return NO_ERR;
 }
 
+U8 protoX_setEnterChk(U8* buf, U16* bufSize)
+{
+	memcpy(buf, gu8chkStateFrame, sizeof(gu8chkStateFrame));
+	*bufSize = sizeof(gu8chkStateFrame);
+	return NO_ERR;
+}
+
+U8 protoW_clearValue(U8* buf, U16* bufSize)
+{
+	memcpy(buf, gu8clearValueFrame, sizeof(gu8clearValueFrame));
+	*bufSize = sizeof(gu8clearValueFrame);
+	return NO_ERR;
+}
 
 
 

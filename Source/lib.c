@@ -279,6 +279,7 @@ float getErrByCoe(U16 coe)
 	 *	与标准值相等(因为当前认为经误差修正过的
 	 *	热表, 得到的示值就是标准值)
 	 */
+	printBuf((U8*)&coe, sizeof(U16), FILE_LINE);
 	if (coe>0) {
 		return (4096.0 / coe - 1.0)*100.0;
 	} else {//如果原系数是0, 则误差为无穷大, 为显示给用户和计算方便, 取100%
@@ -305,18 +306,13 @@ U16 getCoeByPercentErr(float percentErr, U16 oldCoe)
 	 *	式2 除以 式1 得, CoeN/CoeO = V0/Vd, 5
 	 *	故而 CoeN = CoeO*(V0/Vd) = CoeO/(1+ErrN)
 	 */
-	S16 i = 0;
 	U16 newCoeFix = 0;
 	float newCoeFoat = 0.0;
-	float oldCoeFloat = (oldCoe == 0 ? 1 : oldCoe) / 4096.0;
+	float oldCoeFloat = (oldCoe == 0 ? 1.0 : (oldCoe / 4096.0));
 
 	newCoeFoat = (oldCoeFloat / (1.0 + percentErr / 100.0));
-	newCoeFix |= (((int)newCoeFoat) << 12);
-	for (i = 2; i >= 0;i--) {
-		newCoeFoat -= (int)newCoeFoat;
-		newCoeFoat *= 16;
-		newCoeFix |= (((int)newCoeFoat) << (4 * i));
-	}
+	newCoeFix = (int)(newCoeFoat * 4096.0);
+	printBuf((U8*)&newCoeFix, sizeof(U16), FILE_LINE);
 	return newCoeFix;
 }
 
