@@ -108,6 +108,11 @@ U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr p
 	return NO_ERR;
 }
 
+/*
+**	使热表进入检定状态.
+**	@buf:		帧缓存
+**	@bufSize:	帧缓存长度
+*/
 U8 protoX_setEnterChk(U8* buf, U16* bufSize)
 {
 	memcpy(buf, gu8chkStateFrame, sizeof(gu8chkStateFrame));
@@ -122,13 +127,48 @@ U8 protoW_clearValue(U8* buf, U16* bufSize)
 	return NO_ERR;
 }
 
+U8 protoW_setValue(U8* buf, U16* bufSize)
+{
+	return NO_ERR;
+}
 
+U8 vprotoR_readValue(U8* buf, U16* bufSize, U8* valveAddr)
+{
+	vElsonic_send_frame_str readValueStr = { 0 };
 
+	readValueStr.cmd = ELSONIC_READ_VALUE;
+	memcpy((U8*)&readValueStr.addr, valveAddr, sizeof(U16));
+	readValueStr.cs = chkElsonic((U8*)&readValueStr, (U8*)&readValueStr.cs - (U8*)&readValueStr.cmd);
 
+	memcpy(buf, (U8*)&readValueStr, sizeof(vElsonic_send_frame_str));
+	*bufSize = sizeof(vElsonic_send_frame_str);
+	return NO_ERR;
+}
 
+U8 vprotoR_readOpenTime(U8* buf, U16* bufSize, U8* valveAddr)
+{
+	vElsonic_send_frame_str readValueStr = { 0 };
 
+	readValueStr.cmd = ELSONIC_READ_VOPEN;
+	memcpy((U8*)&readValueStr.addr, valveAddr, sizeof(U16));
+	readValueStr.cs = chkElsonic((U8*)&readValueStr, (U8*)&readValueStr.cs - (U8*)&readValueStr.cmd);
 
+	memcpy(buf, (U8*)&readValueStr, sizeof(vElsonic_send_frame_str));
+	*bufSize = sizeof(vElsonic_send_frame_str);
+	return NO_ERR;
+}
 
+U8 vprotoA_readValue(U8* buf, U16 bufSize, vElsonic_asw_frame_ptr pElRetFrame)
+{
+	memcpy(buf, (U8*)pElRetFrame, sizeof(vElsonic_asw_frame_str));
+	return NO_ERR;
+}
+
+U8 vprotoA_readOpenTime(U8* buf, U16 bufSize, vElsonic_vopen_frame_ptr pElRetFrame)
+{
+	memcpy(buf, (U8*)pElRetFrame, sizeof(vElsonic_vopen_frame_str));
+	return NO_ERR;
+}
 
 
 

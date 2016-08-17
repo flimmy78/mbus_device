@@ -14,6 +14,9 @@
 #define UART_WAIT_MID	7000//串口等待时间-中-
 #define UART_WAIT_LONG	40000//串口等待时间-长-
 
+#define ADDR_HEX	0x01//阀门的地址是16进制字符串
+#define ADDR_BCD	0x00//阀门的地址是BCD字符串
+
 #pragma pack(push)
 #pragma pack(1)
 typedef struct {//系统时间结构, 倒序存储以方便使用

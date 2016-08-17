@@ -15,6 +15,7 @@
 
 #define isspace(c)	(c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\12' || c == '\0')
 #define isdigit(c)	((unsigned) ((c)-'0') < 10)
+#define ishex(c)	((unsigned) ((c)-'0') < 10 || (unsigned) ((c)-'a') < 6 || (unsigned) ((c)-'A') < 6 )
 #define isalpha(c)	((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
 #define isupper(c)	(c >= 'A' && c <= 'Z')
 #define STRLEN(c)	strlen((const char*)(c))
@@ -32,7 +33,9 @@ typedef enum {
 extern void printBuf(U8* buf, U16 bufSize, const char* file, const char* func, U32 line);
 extern U8 readSysTime(sys_time_ptr pTime);
 extern U8 countCheck(U8 *data, U16 len);
+extern U8 chkElsonic(U8 *buf, U16 bufSize);
 extern U8 isNumber(U8* s, U16 len);
+extern U8 isHex(U8* s, U16 len);
 extern U8 isFloat(U8* buf, U16 bufSize);
 extern U8 trimSpace(U8* s, U16 len);
 extern U8 inverseStrToBCD(U8* s, U16 sLen, U8* t, U16 tLen);
@@ -45,6 +48,7 @@ extern U8 ErrTocoe(flow_coe_ptr pOldCoe, flow_error_ptr pFloatErr, flow_coe_ptr 
 extern U8 binErrToStr(flow_error_ptr pBinErr, flow_err_string_ptr pStrErr);
 extern U8 stringErrToBin(flow_err_string_ptr pStrErr, flow_error_ptr pBinErr);
 extern U8 bytesToStr(U8* buf, U16 bufSize, U8* strBuf, const char* file, const char* func, U32 line);
+extern void supplementAddr(U8* data);
 extern U8 writeByteToFile(U8* buf, U16 bufSize, S8* fileName);
-
+extern U8 openTimeToStr(vElsonic_vopen_frame_ptr pOpenTime, U8* buf);
 #endif

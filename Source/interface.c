@@ -44,6 +44,20 @@ static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
 	{ BUTTON_CreateIndirect, "修改", ID_BUTTON_2, 130, 255, 80, 20, 0, 0 }
 };
 
+static const GUI_WIDGET_CREATE_INFO widgetSetValve[] = {
+	{ FRAMEWIN_CreateIndirect, "阀门信息", ID_FRAMEWIN_0, 0, 0, 240, 320, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_0, 130, 10, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "阀门号", ID_TEXT_0, 10, 10, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "房间温度", ID_TEXT_1, 10, 50, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_1, 130, 50, 80, 20, 0, 0 },
+	{ TEXT_CreateIndirect, "开阀时间", ID_TEXT_2, 10, 90, 80, 20, 0, 0 },
+	{ EDIT_CreateIndirect, "", ID_EDIT_2, 130, 90, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "退出", ID_BUTTON_0, 10, 270, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "强制开阀", ID_BUTTON_1, 130, 270, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "读阀", ID_BUTTON_2, 10, 140, 80, 20, 0, 0 },
+	{ CHECKBOX_CreateIndirect, "", ID_CHECKBOX_0, 110, 140, 107, 20, 0, 0 }
+};
+
 static const GUI_WIDGET_CREATE_INFO widgetDeviceConfig[] = {
 	{ FRAMEWIN_CreateIndirect, "手持机设置", ID_FRAMEWIN_3, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ TEXT_CreateIndirect, "端口", ID_TEXT_0, 10, 10, 60, 20, 0, 0 },
@@ -123,6 +137,23 @@ static void setMeterErrInit(WM_HWIN hDlg)
 
 	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
 	EDIT_SetMaxLen(hItem, EDIT_MAX_LEN);
+}
+
+static void setValveInit(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_SetTextAlign(hItem, GUI_TA_RIGHT | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, ID_TEXT_0);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, ID_TEXT_1);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, ID_TEXT_2);
+	TEXT_SetTextAlign(hItem, GUI_TA_HCENTER | GUI_TA_VCENTER);
+	hItem = WM_GetDialogItem(hDlg, ID_CHECKBOX_0);
+	CHECKBOX_SetText(hItem, "16进制地址");
+	CHECKBOX_SetState(hItem, 1);
 }
 
 static void deviceConfigInit(WM_HWIN hDlg)
@@ -434,6 +465,104 @@ void setMeterErrCb(WM_MESSAGE* pMsg)
 	}
 }
 
+void readValve(WM_HWIN hDlg)
+{
+	WM_HWIN hItem;
+	U8 valeAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	U8 roomTemp[12] = { 0 };//房间温度
+	U8 openTime[12] = { 0 };//阀开时间
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_GetText(hItem, (S8*)valeAddr, 2 * METER_ADDR_LEN);
+	if (isHex(valeAddr, STRLEN(valeAddr)) == ERROR) {
+		GUI_MessageBox("\n请在阀门表号输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+
+	hItem = WM_GetDialogItem(hDlg, ID_CHECKBOX_0);
+
+	if (logic_readValve(valeAddr, roomTemp, openTime) == ERROR) {
+		GUI_MessageBox("\n读取阀门数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
+	} else {
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_1);
+		EDIT_SetText(hItem, (const S8*)roomTemp);
+		hItem = WM_GetDialogItem(hDlg, ID_EDIT_2);
+		EDIT_SetText(hItem, (const S8*)openTime);
+	}
+	WM_SetFocus(hDlg);
+}
+
+void openValve(WM_HWIN hDlg)
+{
+
+}
+
+void setValveCb(WM_MESSAGE* pMsg)
+{
+	int NCode, Id;
+	WM_HWIN hDlg;
+
+	hDlg = pMsg->hWin;
+
+	switch (pMsg->MsgId)
+	{
+	case WM_INIT_DIALOG:
+		setValveInit(hDlg);
+		break;
+	case WM_NOTIFY_PARENT:
+		Id = WM_GetId(pMsg->hWinSrc);
+		NCode = pMsg->Data.v;
+		switch (NCode) {
+		case WM_NOTIFICATION_RELEASED: //触摸屏消息
+			switch (Id) {
+			case ID_BUTTON_0://退出
+				GUI_EndDialog(hDlg, WM_USER_EXIT);
+				break;
+			case ID_BUTTON_1://开阀
+				openValve(hDlg);
+				break;
+			case ID_BUTTON_2://读取阀门信息
+				readValve(hDlg);
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		break;
+	case WM_KEY: //按键消息
+		switch (((WM_KEY_INFO *)(pMsg->Data.p))->Key) {
+		case GUI_KEY_ESCAPE://Exit
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM1://退出
+			GUI_EndDialog(hDlg, WM_USER_EXIT);
+			break;
+		case GUI_KEY_NUM2://开阀
+			openValve(hDlg);
+			break;
+		case GUI_KEY_NUM3://读取阀门信息
+			readValve(hDlg);
+			break;
+		case GUI_KEY_ENTER:
+			break;
+		case GUI_KEY_UP:
+			WM_SetFocusOnPrevChild(WM_GetParent(WM_GetDialogItem(hDlg, ID_BUTTON_0)));
+			break;
+		case GUI_KEY_DOWN:
+			WM_SetFocusOnNextChild(WM_GetParent(WM_GetDialogItem(hDlg, ID_BUTTON_0)));
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		WM_DefaultProc(pMsg);
+	}
+}
+
 U8 getUartMode(em_databit_idx data, em_parity_idx parity, em_stop_idx stop)
 {
 	U8 i = 0;
@@ -459,7 +588,6 @@ void userSaveConfig(WM_HWIN hDlg)
 	U8  mode;
 	U8	meterType;
 	U8	valveType;
-
 
 	//设备
 	hItem = WM_GetDialogItem(hDlg, ID_DROPDOWN_0);
@@ -560,7 +688,6 @@ void deviceConfigCb(WM_MESSAGE* pMsg)
 	}
 }
 
-
 /************************************************************************/
 /* 创建界面函数群                                                       */
 /************************************************************************/
@@ -577,12 +704,12 @@ void setMeterErr()
 
 void setMeterValue()
 {
-	int iRet;
-	while (1) {
-		iRet = GUI_ExecDialogBox(widgetSetMeterValue, GUI_COUNTOF(widgetSetMeterValue), &setMeterValueCb, WM_HBKWIN, 0, 0);
-		if (iRet == WM_USER_EXIT)
-			return;
-	}
+//	int iRet;
+//	while (1) {
+//		iRet = GUI_ExecDialogBox(widgetSetMeterValue, GUI_COUNTOF(widgetSetMeterValue), &setMeterValueCb, WM_HBKWIN, 0, 0);
+//		if (iRet == WM_USER_EXIT)
+//			return;
+//	}
 }
 
 void setMeter()
@@ -607,11 +734,13 @@ void setMeter()
 
 void setValve()
 {
-
+	int iRet;
+	while (1) {
+		iRet = GUI_ExecDialogBox(widgetSetValve, GUI_COUNTOF(widgetSetValve), &setValveCb, WM_HBKWIN, 0, 0);
+		if (iRet == WM_USER_EXIT)
+			return;
+	}
 }
-
-
-
 
 void configDevice()
 {

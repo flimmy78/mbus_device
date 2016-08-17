@@ -6,6 +6,7 @@
 
 
 #define METER_ADDR_LEN	7//仪表地址长度, 7位BCD码
+#define ELSONIC_OPEN_HOUR_LEN	3//亿林家阀控的开阀时间中小时数的长度
 
 #define PROTOCOL_STANDARD_CJ188	0//CJ188协议
 #define PROTOCOL_STANDARD_26831	1//26831协议
@@ -86,7 +87,50 @@ typedef struct {
 typedef cj188_send_frame_str* cj188_send_frame_ptr;
 
 
+#define ELSONIC_READ_VALUE	0xA0//亿林家阀控协议读取数据
+#define ELSONIC_READ_VOPEN	0xA3//读取温控器的阀开时间
 
+
+
+#define	ELSONIC_FLAG_OPEN	0x01//面板开机
+#define	ELSONIC_FLAG_LOAD_OPEN	0x02//负载(阀门)强制开启
+#define	ELSONIC_FLAG_PANEL_LOCK	0x04//面板锁定
+#define ELSONIC_CHK_CODE		0xA5//亿林家校验和的异或码
+typedef struct {//读写亿林家阀控协议
+	U8	cmd;	//读写命令
+	U16	addr;	//阀控地址
+	U8	func;	//功能码, 开关机, 锁定面板等操作
+	U8	supTemp;//补偿温度
+	U8	setTemp;//手动设定温度
+	U8	rsv;	//保留
+	U8	cs;		//校验
+} vElsonic_send_frame_str;
+typedef vElsonic_send_frame_str* vElsonic_send_frame_ptr;
+
+typedef struct {//亿林家阀控返回帧结构
+	U8	aswcode;//应答码, 固定0x50
+	U16	addr;	//阀控地址
+	U8	func;	//功能码, 开关机, 锁定面板等状态
+	U8	supTemp;//补偿温度
+	U8	setTemp;//手动设定温度
+	U8	rsv;	//保留
+	U8	loadSt;	//负载状态
+	U8	roomTemp;//房间温度
+	U8	inTemp;	//进水温度
+	U8	outTemp;//回水温度
+	U8	cs;		//校验
+}vElsonic_asw_frame_str;
+typedef vElsonic_asw_frame_str* vElsonic_asw_frame_ptr;
+
+typedef struct {//亿林家阀控, 返回阀门状态的帧结构
+	U8	aswcode;	//应答码, 固定0x50
+	U16	addr;		//阀控地址
+	U8	openMin;	//阀开时间, 分钟位(HEX)
+	U8	openHour[3];//阀开时间小时, 小端(BCD)
+	U8	energy[4];	//用热, 小端(BCD)
+	U8	cs;			//校验
+}vElsonic_vopen_frame_str;
+typedef vElsonic_vopen_frame_str* vElsonic_vopen_frame_ptr;
 
 #pragma pack(pop)
 
@@ -104,4 +148,10 @@ typedef enum
 extern U8 protoR_radioMAddr(U8* buf, U16* bufSize, meter_frame_info_ptr pSendFrame);
 extern U8 protoA_meterAddr(U8* buf, U16 bufSize, meter_frame_info_ptr pFrameInfo, flow_coe_ptr pFlowErr);
 extern U8 protoW_ModifyCoe(U8* buf, U16* bufSize, U8* meterAddr, meter_frame_info_ptr pSendFrame, flow_coe_ptr pFlowCoe);
+extern U8 vprotoR_readValue(U8* buf, U16* bufSize, U8* valveAddr);
+extern U8 vprotoA_readValue(U8* buf, U16 bufSize, vElsonic_asw_frame_ptr pElRetFrame);
+extern U8 vprotoR_readOpenTime(U8* buf, U16* bufSize, U8* valveAddr);
+extern U8 vprotoA_readOpenTime(U8* buf, U16 bufSize, vElsonic_vopen_frame_ptr pElRetFrame);
+
+
 #endif

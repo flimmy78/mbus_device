@@ -64,7 +64,7 @@
 #define ID_LISTVIEW_4		(GUI_ID_USER + 0x64)
 #define ID_LISTVIEW_5		(GUI_ID_USER + 0x65)
 
-
+#define ID_CHECKBOX_0		(GUI_ID_USER + 0x70)
 
 
 

@@ -94,6 +94,41 @@ U8 logic_modifyCoe(U8* meterAddr, flow_err_string_ptr pError)
 	return NO_ERR;
 }
 
+U8 logic_readValve(U8* valeAddr, U8* roomTemp, U8* openTime)
+{
+	U8	lu8valveAddr[METER_ADDR_LEN] = { 0 };
+	U8	buf[FRAME_MAX_LEN] = { 0 };
+	U16	bufSize = 0;
+	vElsonic_asw_frame_str vFrameStr = { 0 };
+	vElsonic_vopen_frame_str vOpenTimeStr = { 0 };
+
+	supplementAddr(valeAddr);
+	inverseStrToBCD(valeAddr, STRLEN(valeAddr), lu8valveAddr, METER_ADDR_LEN);
+	
+	//读取房间温度
+	if (vprotoR_readValue(buf, &bufSize, lu8valveAddr) == ERROR) {
+		return ERROR;
+	}
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
+		return ERROR;
+	}
+	vprotoA_readValue(buf, bufSize, &vFrameStr);
+	Lib_sprintf((S8*)roomTemp, "%s", vFrameStr.roomTemp);
+
+	//读取开阀时间
+	if (vprotoR_readOpenTime(buf, &bufSize, lu8valveAddr) == ERROR) {
+		return ERROR;
+	}
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
+		return ERROR;
+	}
+	vprotoA_readOpenTime(buf, bufSize, &vOpenTimeStr);
+	openTimeToStr(&vOpenTimeStr, openTime);
+	return NO_ERR;
+}
+
+
+
 
 
 

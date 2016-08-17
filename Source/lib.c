@@ -1,3 +1,4 @@
+#include <math.h>
 #include "limits.h"
 #include "lib.h"
 
@@ -32,14 +33,20 @@ U8 readSysTime(sys_time_ptr pTime)
 }
 
 //校验, 累加和
-U8 countCheck(U8 *data, U16 len)
+U8 countCheck(U8 *buf, U16 bufSize)
 {
 	U8 cs = 0;
 	U16 i;
-	for (i = 0; i < len; i++, data++)
-		cs += *data;
+	for (i = 0; i < bufSize; i++, buf++)
+		cs += *buf;
 
 	return cs;
+}
+
+//亿林家的协议校验方式
+U8 chkElsonic(U8 *buf, U16 bufSize)
+{
+	return (countCheck(buf, bufSize) ^ ELSONIC_CHK_CODE);
 }
 
 /*
@@ -84,6 +91,26 @@ U8 isNumber(U8* s, U16 len)
 }
 
 /*
+**	检查字符串是否都是16进制字符.
+**	@s:		字符串
+**	@len:	字符串长度
+*/
+U8 isHex(U8* s, U16 len)
+{
+	U16 i = 0;
+	if (len == 0) {
+		return ERROR;
+	}
+	for (i = 0; i < len; s++, i++) {
+		if (!ishex(*s)) {
+			return ERROR;
+		}
+	}
+
+	return NO_ERR;
+}
+
+/*
 **	反序输入的字符串至BCD码.
 **	@s:		源字符串
 **	@sLen:	源字符串长度
@@ -113,6 +140,31 @@ void inverseArray(U8* buf, U16 bufSize)
 		buf[bufSize - i - 1] = buf[i] ^ buf[bufSize - i - 1];
 		buf[i] = buf[i] ^ buf[bufSize - i - 1];
 	}
+}
+
+/*
+**	将不足14位的表号前面补零.
+**	@data:	用户输入的集中器号
+*/
+void supplementAddr(U8* data)
+{
+	U8 lu8tmpStr[EDIT_MAX_LEN] = { 0 };
+	U8 lu8InputLen = 0;
+
+	//supplement '0' before data, if lu8InputLen < 2 * GATEWAY_OADD_LEN
+	lu8InputLen = STRLEN(data);
+	//we use 2 chars to represent a byte, so the mod is 2.
+	if (lu8InputLen % 2) {//if lu8InputLen is Odd, lu8InputLen must <= (2 * GATEWAY_OADD_LEN - 1)
+		if (lu8InputLen > 2 * METER_ADDR_LEN - 1)
+			return;
+	}
+	else {//if lu8InputLen is Even, lu8InputLen must <= 2 * GATEWAY_OADD_LEN
+		if (lu8InputLen > 2 * METER_ADDR_LEN)
+			return;
+	}
+	memset(lu8tmpStr, '0', 2 * METER_ADDR_LEN - lu8InputLen);
+	memcpy(lu8tmpStr + (2 * METER_ADDR_LEN - lu8InputLen), data, lu8InputLen);
+	memcpy(data, lu8tmpStr, 2 * METER_ADDR_LEN);
 }
 
 /*
@@ -388,6 +440,11 @@ U8 writeByteToFile(U8* buf, U16 bufSize, S8* fileName)
 	return NO_ERR;
 }
 
+/*
+**	判断一个字符串是否是浮点数
+**	@buf		字符串缓存
+**	@bufSize	字符串缓存长度
+*/
 U8 isFloat(U8* buf, U16 bufSize)
 {
 	em_float_state state = float_state_init;
@@ -448,7 +505,28 @@ result:
 	return ((state == float_state_digit) ? NO_ERR : ERROR);
 }
 
+/*
+**	将一个BCD码表示的字节序列转化为真正的整数
+**	@BCD		BCD字节缓存, 小端
+**	@byteCnt	字节缓存长度
+*/
+U32 BCDtoHex(U8* BCD, U8 byteCnt)
+{
+	U32 hex = 0;
+	U16 i = 0;
 
+	for (i = 0; i < byteCnt; i++) {
+		hex += BCD_TO_HEX(BCD[i]) * pow(100, i);
+	}
+	return hex;
+}
+
+U8 openTimeToStr(vElsonic_vopen_frame_ptr pOpenTime, U8* buf)
+{
+	U32 hex = BCDtoHex(pOpenTime->openHour, ELSONIC_OPEN_HOUR_LEN);
+	Lib_sprintf((S8*)buf, "%d:%d", hex, pOpenTime->openMin);
+	return NO_ERR;
+}
 
 
 
