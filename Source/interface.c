@@ -52,7 +52,7 @@ static const GUI_WIDGET_CREATE_INFO widgetSetValve[] = {
 	{ EDIT_CreateIndirect, "", ID_EDIT_1, 130, 50, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "开阀时间", ID_TEXT_2, 10, 90, 80, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", ID_EDIT_2, 130, 90, 80, 20, 0, 0 },
-	{ BUTTON_CreateIndirect, "退出", ID_BUTTON_0, 10, 270, 80, 20, 0, 0 },
+	{ BUTTON_CreateIndirect, "强制关阀", ID_BUTTON_0, 10, 270, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "强制开阀", ID_BUTTON_1, 130, 270, 80, 20, 0, 0 },
 	{ BUTTON_CreateIndirect, "读阀", ID_BUTTON_2, 10, 140, 80, 20, 0, 0 },
 	{ CHECKBOX_CreateIndirect, "", ID_CHECKBOX_0, 110, 140, 107, 20, 0, 0 }
@@ -471,15 +471,18 @@ void readValve(WM_HWIN hDlg)
 	U8 valeAddr[2 * METER_ADDR_LEN + 1] = { 0 };
 	U8 roomTemp[12] = { 0 };//房间温度
 	U8 openTime[12] = { 0 };//阀开时间
+	U8 isHexAddr = ADDR_BCD;
 
 	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
 	EDIT_GetText(hItem, (S8*)valeAddr, 2 * METER_ADDR_LEN);
-	if (isHex(valeAddr, STRLEN(valeAddr)) == ERROR) {
-		GUI_MessageBox("\n请在阀门表号输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+	hItem = WM_GetDialogItem(hDlg, ID_CHECKBOX_0);
+	isHexAddr = CHECKBOX_GetState(hItem);
+	if (isHexAddr== ADDR_BCD? \
+		(isNumber(valeAddr, STRLEN(valeAddr)) == ERROR):\
+		(isHex(valeAddr, STRLEN(valeAddr)) == ERROR)) {
+		GUI_MessageBox("\n请在阀门号输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
 		return;
 	}
-
-	hItem = WM_GetDialogItem(hDlg, ID_CHECKBOX_0);
 
 	if (logic_readValve(valeAddr, roomTemp, openTime) == ERROR) {
 		GUI_MessageBox("\n读取阀门数据失败\n", "失败", GUI_MESSAGEBOX_CF_MODAL);
@@ -492,9 +495,39 @@ void readValve(WM_HWIN hDlg)
 	WM_SetFocus(hDlg);
 }
 
+void operateValve(WM_HWIN hDlg, U8 openClose)
+{
+	WM_HWIN hItem;
+	U8 valeAddr[2 * METER_ADDR_LEN + 1] = { 0 };
+	U8 isHexAddr = ADDR_BCD;
+	U8 hint[256] = { 0 };
+	U8 err = NO_ERR;
+
+	hItem = WM_GetDialogItem(hDlg, ID_EDIT_0);
+	EDIT_GetText(hItem, (S8*)valeAddr, 2 * METER_ADDR_LEN);
+	hItem = WM_GetDialogItem(hDlg, ID_CHECKBOX_0);
+	isHexAddr = CHECKBOX_GetState(hItem);
+	if (isHexAddr == ADDR_BCD ? \
+		(isNumber(valeAddr, STRLEN(valeAddr)) == ERROR) : \
+		(isHex(valeAddr, STRLEN(valeAddr)) == ERROR)) {
+		GUI_MessageBox("\n请在阀门号输入数字\n", "错误", GUI_MESSAGEBOX_CF_MODAL);
+		return;
+	}
+
+	err = logic_operValve(valeAddr, openClose);
+	Lib_sprintf((S8*)hint, "\n%s阀门%s\n", openClose == OPEN_VALVE ? "打开" : "关闭", err == ERROR ? "失败" : "成功");
+	GUI_MessageBox((const S8*)hint, err == ERROR ? "失败" : "成功", GUI_MESSAGEBOX_CF_MODAL);
+	WM_SetFocus(hDlg);
+}
+
 void openValve(WM_HWIN hDlg)
 {
+	operateValve(hDlg, OPEN_VALVE);
+}
 
+void closeValve(WM_HWIN hDlg)
+{
+	operateValve(hDlg, CLOSE_VALVE);
 }
 
 void setValveCb(WM_MESSAGE* pMsg)
@@ -515,8 +548,8 @@ void setValveCb(WM_MESSAGE* pMsg)
 		switch (NCode) {
 		case WM_NOTIFICATION_RELEASED: //触摸屏消息
 			switch (Id) {
-			case ID_BUTTON_0://退出
-				GUI_EndDialog(hDlg, WM_USER_EXIT);
+			case ID_BUTTON_0://关阀
+				closeValve(hDlg);
 				break;
 			case ID_BUTTON_1://开阀
 				openValve(hDlg);
@@ -537,8 +570,8 @@ void setValveCb(WM_MESSAGE* pMsg)
 		case GUI_KEY_ESCAPE://Exit
 			GUI_EndDialog(hDlg, WM_USER_EXIT);
 			break;
-		case GUI_KEY_NUM1://退出
-			GUI_EndDialog(hDlg, WM_USER_EXIT);
+		case GUI_KEY_NUM1://关阀
+			closeValve(hDlg);
 			break;
 		case GUI_KEY_NUM2://开阀
 			openValve(hDlg);

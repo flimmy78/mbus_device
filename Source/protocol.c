@@ -166,10 +166,31 @@ U8 vprotoA_readValue(U8* buf, U16 bufSize, vElsonic_asw_frame_ptr pElRetFrame)
 
 U8 vprotoA_readOpenTime(U8* buf, U16 bufSize, vElsonic_vopen_frame_ptr pElRetFrame)
 {
-	memcpy(buf, (U8*)pElRetFrame, sizeof(vElsonic_vopen_frame_str));
+	memcpy((U8*)pElRetFrame, buf, sizeof(vElsonic_vopen_frame_str));
 	return NO_ERR;
 }
 
+U8 vprotoX_operValue(U8* buf, U16* bufSize, U8* valveAddr, U8 openClose)
+{
+	U8 setInform[] = { ELSONIC_OPER_VALVE, 0x00, 0x00, ELSONIC_OPEN_VALVE, 0x00, 0x00, 0x00, 0x00 };
 
+	setInform[3] = (openClose == OPEN_VALVE ? ELSONIC_OPEN_VALVE : ELSONIC_CLOSE_VALVE);
+	memcpy(setInform + 1, valveAddr, 2);
+	setInform[7] = chkElsonic(setInform, 7);
+	*bufSize = sizeof(setInform);
+	memcpy(buf, setInform, *bufSize);
+	return NO_ERR;
+}
+
+U8 vprotoA_operValue(U8* buf, U16 bufSize, U8 openClose)
+{
+	vElsonic_state state = { 0 };
+
+	memcpy(&state, buf + 3, 1);
+	if (openClose == OPEN_VALVE ? state.fClose : !state.fClose) {
+		return ERROR;
+	}
+	return NO_ERR;
+}
 
 

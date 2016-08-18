@@ -109,28 +109,49 @@ U8 logic_readValve(U8* valeAddr, U8* roomTemp, U8* openTime)
 	if (vprotoR_readValue(buf, &bufSize, lu8valveAddr) == ERROR) {
 		return ERROR;
 	}
+	printBuf(buf, bufSize, FILE_LINE);
 	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
 		return ERROR;
 	}
+	printBuf(buf, bufSize, FILE_LINE);
 	vprotoA_readValue(buf, bufSize, &vFrameStr);
-	Lib_sprintf((S8*)roomTemp, "%s", vFrameStr.roomTemp);
+	Lib_sprintf((S8*)roomTemp, "%d C", vFrameStr.roomTemp);
 
 	//读取开阀时间
 	if (vprotoR_readOpenTime(buf, &bufSize, lu8valveAddr) == ERROR) {
 		return ERROR;
 	}
+	printBuf(buf, bufSize, FILE_LINE);
 	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
 		return ERROR;
 	}
+	printBuf(buf, bufSize, FILE_LINE);
+	
 	vprotoA_readOpenTime(buf, bufSize, &vOpenTimeStr);
+	printBuf((U8*)&vOpenTimeStr, sizeof(vElsonic_vopen_frame_str), FILE_LINE);
 	openTimeToStr(&vOpenTimeStr, openTime);
 	return NO_ERR;
 }
 
+U8 logic_operValve(U8* valeAddr, U8 openClose)
+{
+	U8	lu8valveAddr[METER_ADDR_LEN] = { 0 };
+	U8	buf[FRAME_MAX_LEN] = { 0 };
+	U16	bufSize = 0;
 
+	supplementAddr(valeAddr);
+	inverseStrToBCD(valeAddr, STRLEN(valeAddr), lu8valveAddr, METER_ADDR_LEN);
 
-
-
-
-
-
+	if (vprotoX_operValue(buf, &bufSize, lu8valveAddr, openClose) == ERROR) {
+		return ERROR;
+	}
+	printBuf(buf, bufSize, FILE_LINE);
+	if (logic_sendAndRead(buf, &bufSize, UART_WAIT_SHORT) == ERROR) {
+		return ERROR;
+	}
+	printBuf(buf, bufSize, FILE_LINE);
+	if (vprotoA_operValue(buf, bufSize, openClose) == ERROR) {
+		return ERROR;
+	}
+	return NO_ERR;
+}

@@ -11,6 +11,8 @@
 #define PROTOCOL_STANDARD_CJ188	0//CJ188协议
 #define PROTOCOL_STANDARD_26831	1//26831协议
 
+#define OPEN_VALVE				0//打开阀门
+#define CLOSE_VALVE				1//关闭阀门
 
 #pragma pack(push)
 #pragma pack(1)
@@ -89,8 +91,9 @@ typedef cj188_send_frame_str* cj188_send_frame_ptr;
 
 #define ELSONIC_READ_VALUE	0xA0//亿林家阀控协议读取数据
 #define ELSONIC_READ_VOPEN	0xA3//读取温控器的阀开时间
-
-
+#define ELSONIC_OPER_VALVE	0xA9//操作亿林阀门命令
+#define ELSONIC_CLOSE_VALVE	0x80//强制关闭亿林阀门
+#define ELSONIC_OPEN_VALVE	0x40//强制开启亿林阀门
 
 #define	ELSONIC_FLAG_OPEN	0x01//面板开机
 #define	ELSONIC_FLAG_LOAD_OPEN	0x02//负载(阀门)强制开启
@@ -132,6 +135,17 @@ typedef struct {//亿林家阀控, 返回阀门状态的帧结构
 }vElsonic_vopen_frame_str;
 typedef vElsonic_vopen_frame_str* vElsonic_vopen_frame_ptr;
 
+typedef struct {
+	U8	dOpen	: 1;//开关机, 0 -> 关机, 1->开机
+	U8	fOpen	: 1;//强制开启负载标志, 1->负载强制开启, 0->负载正常工作
+	U8	cLock	: 1;//锁定面板, 0->解锁, 1->锁定
+	U8	eDisp	: 1;//用热显示, 1：启用, 0：禁止
+	U8	tDiff1	: 1;//启动温差(1℃~5℃)
+	U8	tDiff2 : 1;//启动温差(1℃~5℃)
+	U8	tDiff3 : 1;//启动温差(1℃~5℃)
+	U8	fClose	: 1;//强制关闭负载标志, 1->负载强制关闭, 0->负载正常工作
+}vElsonic_state;
+
 #pragma pack(pop)
 
 
@@ -152,6 +166,6 @@ extern U8 vprotoR_readValue(U8* buf, U16* bufSize, U8* valveAddr);
 extern U8 vprotoA_readValue(U8* buf, U16 bufSize, vElsonic_asw_frame_ptr pElRetFrame);
 extern U8 vprotoR_readOpenTime(U8* buf, U16* bufSize, U8* valveAddr);
 extern U8 vprotoA_readOpenTime(U8* buf, U16 bufSize, vElsonic_vopen_frame_ptr pElRetFrame);
-
-
+extern U8 vprotoX_operValue(U8* buf, U16* bufSize, U8* valveAddr, U8 openClose);
+extern U8 vprotoA_operValue(U8* buf, U16 bufSize, U8 openClose);
 #endif

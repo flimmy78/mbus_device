@@ -524,6 +524,7 @@ U32 BCDtoHex(U8* BCD, U8 byteCnt)
 U8 openTimeToStr(vElsonic_vopen_frame_ptr pOpenTime, U8* buf)
 {
 	U32 hex = BCDtoHex(pOpenTime->openHour, ELSONIC_OPEN_HOUR_LEN);
+
 	Lib_sprintf((S8*)buf, "%d:%d", hex, pOpenTime->openMin);
 	return NO_ERR;
 }
