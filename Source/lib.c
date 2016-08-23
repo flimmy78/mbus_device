@@ -264,7 +264,7 @@ U32 stringToL(const char* nptr, char **endptr, U8 base)
 	}
 
 	if (any < 0) {//超限, 返回极限值
-		acc = neg ? LONG_MIN : LONG_MAX;
+		acc = (neg ? LONG_MIN : LONG_MAX);
 	} else if (neg)//未超限, 但为负数
 		acc = -acc;
 

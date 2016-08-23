@@ -16,20 +16,20 @@
 /* widget数组群                                                         */
 /************************************************************************/
 static const GUI_WIDGET_CREATE_INFO widgetMainFrame[] = {
-	{ FRAMEWIN_CreateIndirect, "仪表与阀控", ID_FRAMEWIN_0, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "仪表与阀控", ID_FRAMEWIN_0, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "热量表", ID_BUTTON_0, 70, 35, 80, 50, 0, 0 },
 	{ BUTTON_CreateIndirect, "阀控", ID_BUTTON_1, 70, 105, 80, 50, 0, 0 },
 	{ BUTTON_CreateIndirect, "设置", ID_BUTTON_2, 70, 175, 80, 50, 0, 0 }
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetMeterRelate[] = {
-	{ FRAMEWIN_CreateIndirect, "仪表程序", ID_FRAMEWIN_1, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "仪表程序", ID_FRAMEWIN_1, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "误差", ID_BUTTON_0, 10, 70, 80, 80, 0, 0 },
 	{ BUTTON_CreateIndirect, "示值", ID_BUTTON_1, 130, 70, 80, 80, 0, 0 }
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
-	{ FRAMEWIN_CreateIndirect, "设置误差", ID_FRAMEWIN_0, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "设置误差", ID_FRAMEWIN_0, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ BUTTON_CreateIndirect, "表号", ID_BUTTON_0, 10, 10, 80, 20, 0, 0 },
 	{ EDIT_CreateIndirect, "", ID_EDIT_0, 100, 10, 120, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "大", ID_TEXT_0, 10, 50, 80, 20, 0, 0 },
@@ -45,7 +45,7 @@ static const GUI_WIDGET_CREATE_INFO widgetSetMeterErr[] = {
 };
 
 static const GUI_WIDGET_CREATE_INFO widgetSetValve[] = {
-	{ FRAMEWIN_CreateIndirect, "阀门信息", ID_FRAMEWIN_0, 0, 0, 240, 320, 0, 0 },
+	{ FRAMEWIN_CreateIndirect, "阀门信息", ID_FRAMEWIN_0, 0, 0, CL998_LCD_XLEN, CL998_LCD_YLEN, 0, 0 },
 	{ EDIT_CreateIndirect, "", ID_EDIT_0, 130, 10, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "阀门号", ID_TEXT_0, 10, 10, 80, 20, 0, 0 },
 	{ TEXT_CreateIndirect, "房间温度", ID_TEXT_1, 10, 50, 80, 20, 0, 0 },
